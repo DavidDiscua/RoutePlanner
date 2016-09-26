@@ -1,0 +1,6 @@
+Ruta 0 distancia: 761.4260982439688
+Ruta 1 distancia: 913.8759644659407
+Ruta 2 distancia: 760.1788281042118
+Ruta 3 distancia: 553.8253100732749
+Ruta 4 distancia: 849.4869082236035
+Ruta 5 distancia: 482.04013751283554
