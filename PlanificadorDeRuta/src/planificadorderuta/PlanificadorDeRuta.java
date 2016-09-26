@@ -38,15 +38,16 @@ public class PlanificadorDeRuta {
     private static double Residuo;
     private static ArrayList<Truck> Trucks;//Control del número de camiones
     private static ArrayList<String> Distances;
-    private static WeightedMultigraph<City, Double> Map;
+    private static WeightedMultigraph<City, Distance> Map;
     private static Random R;
+    private static ArrayList<Distance> DISTANCIAS;
 
     public static void main(String[] args) {
 
         TrucksNumber = 0;//Número de camiones
         CityCounter = 1;//El nombre que se le asignará a cada Ciudad
         Points = new ArrayList();//La Lista de puntos para calcular distancia Geodesica 
-        Map = new WeightedMultigraph<City, Double>(Double.class);;//El grafo que moldea las ciudades
+        Map = new WeightedMultigraph<City, Distance>(Distance.class);;//El grafo que moldea las ciudades
         R = new Random();
         // SimpleWeightedGraph<City, Distance> graph;graph = new SimpleWeightedGraph<City, Distance>(Distance.class);
         Distances = new ArrayList();
@@ -55,12 +56,13 @@ public class PlanificadorDeRuta {
         EachTruck = Points.size() / TrucksNumber;
         Residuo = (Points.size() % TrucksNumber);
         Trucks = new ArrayList();
+        DISTANCIAS = new ArrayList();
         System.out.println("Numbers Of Trucks: " + TrucksNumber);
         System.out.println("Each Truck: " + EachTruck);
         System.out.println("Residuo : " + Residuo);
         BuildGrah();
         //  DrawGraph();
-        // setRutes();
+        setRutes();
 
         //End Setting Up
     }
@@ -80,38 +82,25 @@ public class PlanificadorDeRuta {
             }
         }
         //Set up Vertex
-        int control = 0;
-        int control2 = 0;
-        int control3 = 0;
 
         Object[] Vertices = Map.vertexSet().toArray();
         for (int i = 0; i < Vertices.length; i++) {
 
             for (int j = 0; j < Vertices.length; j++) {
-                control++;
+                // control++;
                 double distance = (CalculateDistance(((City) Vertices[i]).getCoordenateInX(), ((City) Vertices[i]).getCoordenateInY(), ((City) Vertices[j]).getCoordenateInX(), ((City) Vertices[j]).getCoordenateInY()));
                 // if (!((City) Vertices[i]).toString().equalsIgnoreCase(((City) Vertices[j]).toString())) {
                 // if (!sameChars(((City) Vertices[i]).toString(), ((City) Vertices[j]).toString())) 
+                Distance D = new Distance(distance);
                 String CityOne = ((City) Vertices[i]).toString();
                 String CityTwo = ((City) Vertices[j]).toString();
                 if (!CityOne.equalsIgnoreCase(CityTwo)) {
-                    // Map.addEdge(((City) Vertices[i]), ((City) Vertices[j]), distance);
-                    Map.addEdge(new City(R.nextDouble(),R.nextDouble(),R.nextInt()),new City(R.nextDouble(),R.nextDouble(),R.nextInt()), distance);
-                    System.out.println("Edges Count :" + Map.edgeSet().size());
-                    control3++;
-                } else {
-                    control2++;
-                    //  System.out.println(CityOne);
-                    //  System.out.println(CityTwo);
-                }
+                    Map.addEdge(((City) Vertices[i]), ((City) Vertices[j]), D);
+                    DISTANCIAS.add(D);
 
-                //Map.setEdgeWeight(D, distance);
-                // } 
+                }
             }
         }
-        System.out.println("Control: " + control);
-        System.out.println("Control2: " + control2);
-        System.out.println("Control3: " + control3);
         System.out.println("Nodes Count :" + Map.vertexSet().size());
         System.out.println("Edges Count :" + Map.edgeSet().size());
     }
@@ -124,7 +113,7 @@ public class PlanificadorDeRuta {
     private static ArrayList<String> LoadPoints(ArrayList<String> Points) {
 
         boolean getTrucksNumber = false;
-        try (BufferedReader br = new BufferedReader(new FileReader("./src/Resources/entrada2.txt"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader("./src/Resources/entrada5.txt"))) {
 
             String sCurrentLine;
 
@@ -153,7 +142,7 @@ public class PlanificadorDeRuta {
         //Residuo;
         //Trucks;
         City CurrentNode = null;
-        Set<Double> Aristas = null;
+        Set<Distance> Aristas = null;
         TreeSet SorterEdges = new TreeSet();
         Object[] Vertices = Map.vertexSet().toArray();
         Truck TruckTemp = null;
@@ -167,16 +156,24 @@ public class PlanificadorDeRuta {
 
                     Aristas = Map.edgesOf(CurrentNode);//Get all Edges from that node
                     //sort
+                    CurrentNode.setMarcked(true);
                     SorterEdges = setTree(Aristas);//in a Tree
-                    System.out.println("Aristas de Nodo: " + SorterEdges.size());
                     TruckTemp = new Truck();
                     City TargetCity = null;
+                    CitiesCount = 0;
                     for (Object obj : SorterEdges) {
-                        TargetCity = (City) Map.getEdgeTarget((double) obj);
-
+                        Distance D = null;
+                        for (int j = 0; j < DISTANCIAS.size(); j++) {
+                            if (obj.toString().equalsIgnoreCase(DISTANCIAS.get(j).toString())) {
+                                D = DISTANCIAS.get(j);
+                                break;
+                            }
+                        }
+                        TargetCity = (City) Map.getEdgeTarget(D);
+                        //  if (!TargetCity.isMarcked()) {
                         TruckTemp.setCities(TargetCity);
                         TruckTemp.setDistance((double) obj);
-                        // TargetCity.setMarcked(true);
+                        TargetCity.setMarcked(true);
                         CitiesCount++;
                         if (CitiesCount == (EachTruck + Residuo)) {
 
@@ -184,23 +181,29 @@ public class PlanificadorDeRuta {
                             break;
                         }
 
+                        //  }
                     }
 
+                    if (!TruckTemp.getCities().isEmpty()) {
+                        City CityTemp = TruckTemp.getCities().get(TruckTemp.getCities().size() - 1);
+
+                        TruckTemp.setDistance((double) CalculateDistance(CityTemp.getCoordenateInX(), CityTemp.getCoordenateInY(), Origin.getCoordenateInX(), Origin.getCoordenateInY()));
+                    }
+                    if (CitiesCount == (EachTruck + Residuo)) {
+
+                        Residuo = 0;
+                        break;
+                    }
+                    System.out.println("TRUCK " + X + "  :" + TruckTemp.getDistance());
+                    System.out.println("VISTING: ");
+
                 } else {
-                    //  System.out.println("El nodo ya está marcado");
+//                    System.out.println("El nodo ya está marcado");
 
                 }
-                CitiesCount = 0;
-                City CityTemp = TruckTemp.getCities().get(TruckTemp.getCities().size() - 1);
-                TruckTemp.setDistance((double) CalculateDistance(CityTemp.getCoordenateInX(), CityTemp.getCoordenateInY(), Origin.getCoordenateInX(), Origin.getCoordenateInY()));
+//fin de for
 
             }
-            System.out.println("TRUCK " + X + "  :" + TruckTemp.getDistance());
-            System.out.println("VISTING: ");
-//            for (int j = 0; j < TruckTemp.getCities().size(); j++) {
-//
-//                System.out.println(TruckTemp.getCities().get(j).toString());
-//            }
             Trucks.add(TruckTemp);
         }
 
@@ -220,7 +223,7 @@ public class PlanificadorDeRuta {
                 String cor = (int) cities.get(j).getCoordenateInX() + "," + (int) cities.get(j).getCoordenateInY();
                 for (int k = 0; k < Points.size(); k++) {
                     if (Points.get(k).equalsIgnoreCase(cor)) {
-                        Formato.add(cor);
+                        Formato.add(Integer.toString(k));
                     }
                 }
             }
@@ -281,7 +284,7 @@ public class PlanificadorDeRuta {
         return Arrays.equals(first, second);
     }
 
-    public static TreeSet setTree(Set<Double> Aristas) {
+    public static TreeSet setTree(Set<Distance> Aristas) {
         TreeSet SorterEdges = new TreeSet();
         for (Object obj : Aristas) {
             SorterEdges.add(new Double(obj.toString()));
