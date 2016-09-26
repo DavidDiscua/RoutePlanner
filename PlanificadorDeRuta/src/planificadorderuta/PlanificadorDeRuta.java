@@ -194,8 +194,6 @@ public class PlanificadorDeRuta {
                         Residuo = 0;
                         break;
                     }
-                    System.out.println("TRUCK " + X + "  :" + TruckTemp.getDistance());
-                    System.out.println("VISTING: ");
 
                 } else {
 //                    System.out.println("El nodo ya está marcado");
@@ -216,6 +214,7 @@ public class PlanificadorDeRuta {
         ArrayList<String> Formato2 = new ArrayList();
         City TargetCity = null;
         ArrayList<City> cities = new ArrayList();
+        System.out.println("CIUDADES:");
         for (int i = 0; i < Trucks.size(); i++) {
             cities = Trucks.get(i).getCities();
             Formato.add(Integer.toString(cities.size()));
@@ -223,15 +222,17 @@ public class PlanificadorDeRuta {
                 String cor = (int) cities.get(j).getCoordenateInX() + "," + (int) cities.get(j).getCoordenateInY();
                 for (int k = 0; k < Points.size(); k++) {
                     if (Points.get(k).equalsIgnoreCase(cor)) {
+                        System.out.println(k);
                         Formato.add(Integer.toString(k));
                     }
                 }
             }
         }
-
+        System.out.println("RUTAS:");
         for (int i = 0; i < Trucks.size(); i++) {
 
             Formato2.add("Route " + i + ": " + Trucks.get(i).getDistance());
+            System.out.println("Route " + i + ": " + Trucks.get(i).getDistance());
         }
         SaveFile(Formato, "Salidas");
         SaveFile(Formato2, "calculos");
